@@ -2,6 +2,10 @@ try:
     import MySQLdb as Database
 except ImportError, e:
     from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Error loading MySQLdb module: %s" % e)
+
+from weakref import proxy
+import types
 
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.mysql import base as mysqlbase
@@ -19,6 +23,8 @@ from django.conf import settings
 if settings.DEBUG:
     from warnings import filterwarnings
     filterwarnings("always", category=Database.Warning)
+
+from django.utils.safestring import SafeUnicode, SafeString
 
 class DatabaseFeatures(mysqlbase.DatabaseFeatures):
     supports_foreign_keys = True
@@ -64,3 +70,52 @@ class DatabaseWrapper(mysqlbase.DatabaseWrapper):
         self.creation = DatabaseCreation(self)
         self.introspection = DatabaseIntrospection(self)
         self.validation = DatabaseValidation(self)
+
+    def _cursor(self):
+        """
+        django.db.backends.mysql.base.DatabaseWrapper._cursor() instantiates
+        the MySQLdb object. This override modifies the string decoder to support
+        storing and retrieving unicode strings in a database where the charset
+        is latin1.
+        
+        If the charset is latin1:
+          - `unicode` objects are decoded to a byte string before saving.
+          - `str` objects returned from the database are encoded with the
+            'utf8' codec, not 'latin1'.
+        """
+        cursor = super(DatabaseWrapper, self)._cursor()
+        connection = self.connection
+        charset = connection.character_set_name()
+        charset_fix_applied = hasattr(connection.string_decoder, 'charset_fix_applied')
+        if charset != 'utf' and not charset_fix_applied:
+            def _get_string_decoder():
+                def string_decoder(s):
+                    string_decoder_charset = string_decoder.charset
+                    if string_decoder.charset == 'latin1':
+                        string_decoder_charset = 'utf8'
+                    return s.decode(string_decoder_charset)
+                return string_decoder
+
+            connection.string_decoder = string_decoder = _get_string_decoder()
+            connection.string_decoder.charset = charset
+            connection.string_decoder.charset_fix_applied = True
+            connection.converter[Database.FIELD_TYPE.STRING][-1:] = [(None, string_decoder)]
+            connection.converter[Database.FIELD_TYPE.VAR_STRING][-1:] = [(None, string_decoder)]
+            connection.converter[Database.FIELD_TYPE.VARCHAR][-1:] = [(None, string_decoder)]
+            connection.converter[Database.FIELD_TYPE.BLOB][-1:] = [(None, string_decoder)]
+
+            db = proxy(connection)
+            def _get_unicode_literal():
+                def unicode_literal(u, dummy=None):
+                    unicode_literal_charset = unicode_literal.charset
+                    if string_decoder.charset == 'latin1':
+                        unicode_literal_charset = 'raw_unicode_escape'
+                    return db.literal(u.encode(unicode_literal_charset))
+                return unicode_literal
+
+            connection.unicode_literal = unicode_literal = _get_unicode_literal()
+            connection.unicode_literal.charset = charset
+            connection.encoders[types.UnicodeType] = unicode_literal
+            connection.encoders[SafeUnicode] = unicode_literal
+
+        return cursor
