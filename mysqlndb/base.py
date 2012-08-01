@@ -109,7 +109,7 @@ class DatabaseWrapper(mysqlbase.DatabaseWrapper):
                 def unicode_literal(u, dummy=None):
                     unicode_literal_charset = unicode_literal.charset
                     if string_decoder.charset == 'latin1':
-                        unicode_literal_charset = 'raw_unicode_escape'
+                        unicode_literal_charset = 'utf8'
                     return db.literal(u.encode(unicode_literal_charset))
                 return unicode_literal
 
