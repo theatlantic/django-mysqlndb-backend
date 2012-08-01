@@ -7,6 +7,8 @@ except ImportError, e:
 from weakref import proxy
 import types
 
+import random
+
 from django.db.backends import BaseDatabaseWrapper
 from django.db.backends.mysql import base as mysqlbase
 
@@ -33,14 +35,15 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
     def get_storage_engine(self):
         if self._storage_engine is None:
             cursor = self.connection.cursor()
-            cursor.execute('CREATE TABLE INTROSPECT_TEST (X INT)')
+            db_name = 'INTROSPECTION_TEST_%d' % random.randint(1, 1000000)
+            cursor.execute('CREATE TABLE %s (X INT)' % db_name)
             # This command is MySQL specific; the second column
             # will tell you the default table type of the created
             # table. Since all Django's test tables will have the same
             # table type, that's enough to evaluate the feature.
-            cursor.execute('SHOW TABLE STATUS WHERE Name="INTROSPECT_TEST"')
+            cursor.execute('SHOW TABLE STATUS WHERE Name="%s"' % db_name)
             result = cursor.fetchone()
-            cursor.execute('DROP TABLE INTROSPECT_TEST')
+            cursor.execute('DROP TABLE %s' % db_name)
             self._storage_engine = result[1]
         return self._storage_engine
 
