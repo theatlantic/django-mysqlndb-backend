@@ -1,15 +1,13 @@
 import MySQLdb as Database
 from django.db.backends.mysql import creation
 
+
 class DatabaseCreation(creation.DatabaseCreation):
     supports_foreign_keys = True
 
     def __init__(self, connection):
         super(DatabaseCreation, self).__init__(connection)
-        try:
-            self.connection.features.confirm()
-        except Database.OperationalError:
-            pass
+        self.connection.features.confirm()
         self.supports_foreign_keys = getattr(self.connection.features, "supports_foreign_keys", True)
 
     def sql_for_inline_foreign_key_references(self, field, known_models, style):

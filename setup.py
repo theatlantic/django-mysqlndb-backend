@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='django-mysqlndb-backend',
-    version='1.0.0',
+    version='1.0.1',
     author_email='ATMOprogrammers@theatlantic.com',
     packages=['mysqlndb'],
     url='https://github.com/theatlantic/django-mysqlndb-backend',
