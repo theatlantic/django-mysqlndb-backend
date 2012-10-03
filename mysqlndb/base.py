@@ -32,6 +32,20 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
     supports_foreign_keys = True
     _storage_engine = None
 
+    def _supports_transactions(self):
+        "Confirm support for transactions"
+        cursor = self.connection.cursor()
+        table_name = 'ROLLBACK_TEST_%d' % random.randint(1, 1000000)
+        cursor.execute('CREATE TEMPORARY TABLE %s (X INT)' % table_name)
+        self.connection._commit()
+        cursor.execute('INSERT INTO %s (X) VALUES (8)' % table_name)
+        self.connection._rollback()
+        cursor.execute('SELECT COUNT(X) FROM %s' % table_name)
+        count, = cursor.fetchone()
+        cursor.execute('DROP TABLE %s' % table_name)
+        self.connection._commit()
+        return count == 0
+
     def get_storage_engine(self):
         if self._storage_engine is None:
             try:
