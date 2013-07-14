@@ -42,7 +42,7 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
         self.connection._rollback()
         cursor.execute('SELECT COUNT(X) FROM %s' % table_name)
         count, = cursor.fetchone()
-        cursor.execute('DROP TABLE %s' % table_name)
+        cursor.execute('DROP TEMPORARY TABLE %s' % table_name)
         self.connection._commit()
         return count == 0
 
