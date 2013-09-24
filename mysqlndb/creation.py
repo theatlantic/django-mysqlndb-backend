@@ -28,7 +28,7 @@ class DatabaseCreation(creation.DatabaseCreation):
         elif model in pending_references:
             references = copy.deepcopy(pending_references)
             pending_references = []
-            for rel_class, f in references:
+            for rel_class, f in references[model]:
                 if getattr(f, 'db_constraint', True):
                     pending_references.append((rel_class, f))
         return super(DatabaseCreation, self).sql_for_pending_references(model, style, pending_references)
