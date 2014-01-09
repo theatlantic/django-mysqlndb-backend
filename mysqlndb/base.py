@@ -73,7 +73,7 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
         """
         self._confirmed = True
         self.supports_transactions = self._supports_transactions()
-        self.supports_stddev = self._supports_stddev()
+        self.supports_stddev = self.supports_stddev
         self.can_introspect_foreign_keys = self.storage_engine not in ('MyISAM', 'ndbcluster',)
         self.supports_foreign_keys = self.storage_engine != 'ndbcluster'
 
