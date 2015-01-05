@@ -32,39 +32,22 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
     supports_foreign_keys = True
     _storage_engine = None
 
-    def _supports_transactions(self):
-        "Confirm support for transactions"
-        cursor = self.connection.cursor()
-        table_name = 'ROLLBACK_TEST_%d' % random.randint(1, 1000000)
-        cursor.execute('CREATE TEMPORARY TABLE %s (X INT)' % table_name)
-        self.connection._commit()
-        cursor.execute('INSERT INTO %s (X) VALUES (8)' % table_name)
-        self.connection._rollback()
-        cursor.execute('SELECT COUNT(X) FROM %s' % table_name)
-        count, = cursor.fetchone()
-        cursor.execute('DROP TEMPORARY TABLE %s' % table_name)
-        self.connection._commit()
-        return count == 0
-
-    def get_storage_engine(self):
+    @property
+    def storage_engine(self):
         if self._storage_engine is None:
+            self._storage_engine = 'UNKNOWN'
             try:
                 cursor = self.connection.cursor()
-                db_name = 'INTROSPECTION_TEST_%d' % random.randint(1, 1000000)
-                cursor.execute('CREATE TABLE %s (X INT)' % db_name)
-                # This command is MySQL specific; the second column
-                # will tell you the default table type of the created
-                # table. Since all Django's test tables will have the same
-                # table type, that's enough to evaluate the feature.
-                cursor.execute('SHOW TABLE STATUS WHERE Name="%s"' % db_name)
-                result = cursor.fetchone()
-                cursor.execute('DROP TABLE %s' % db_name)
-                self._storage_engine = result[1]
+                cursor.execute('SHOW ENGINES')
+                rows = cursor.fetchall()
+                if rows:
+                    try:
+                        self._storage_engine = [r[0] for r in rows if r[1] == 'DEFAULT'][0]
+                    except IndexError:
+                        pass
             except (Database.OperationalError, DatabaseError):
-                self._storage_engine = 'UNKNOWN'
+                pass
         return self._storage_engine
-
-    storage_engine = property(get_storage_engine)
 
     def confirm(self):
         """
@@ -72,7 +55,7 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
         installs
         """
         self._confirmed = True
-        self.supports_transactions = self._supports_transactions()
+        self.supports_transactions = self.storage_engine in ('InnoDB', 'ndbcluster', 'BDB')
         self.supports_stddev = self._supports_stddev()
         self.can_introspect_foreign_keys = self.storage_engine not in ('MyISAM', 'ndbcluster',)
         self.supports_foreign_keys = self.storage_engine != 'ndbcluster'
