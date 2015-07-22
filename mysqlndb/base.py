@@ -10,7 +10,12 @@ import types
 
 import random
 
-from django.db.backends import BaseDatabaseWrapper
+try:
+    # Django 1.8
+    from django.db.backends.base.base import BaseDatabaseWrapper
+except ImportError:
+    from django.db.backends import BaseDatabaseWrapper
+
 from django.db.backends.mysql import base as mysqlbase
 from django.db.backends.mysql.client import DatabaseClient
 from django.db.backends.mysql.introspection import DatabaseIntrospection

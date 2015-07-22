@@ -1,4 +1,9 @@
-from south.db.mysql import DatabaseOperations as BaseDatabaseOperations
+import django
+
+if django.VERSION < (1, 7):
+    from south.db.mysql import DatabaseOperations as BaseDatabaseOperations
+else:
+    from django.db.backends.mysql.base import DatabaseOperations as BaseDatabaseOperations
 
 
 class DatabaseOperations(BaseDatabaseOperations):
