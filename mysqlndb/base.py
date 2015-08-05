@@ -10,13 +10,19 @@ import types
 
 import random
 
+from django.db.backends.mysql import base as mysqlbase
+
+BaseDatabaseWrapper = None
 try:
     # Django 1.8
     from django.db.backends.base.base import BaseDatabaseWrapper
 except ImportError:
+    pass
+
+if not BaseDatabaseWrapper or not issubclass(mysqlbase.DatabaseWrapper, BaseDatabaseWrapper):
     from django.db.backends import BaseDatabaseWrapper
 
-from django.db.backends.mysql import base as mysqlbase
+
 from django.db.backends.mysql.client import DatabaseClient
 from django.db.backends.mysql.introspection import DatabaseIntrospection
 from django.db.backends.mysql.validation import DatabaseValidation
