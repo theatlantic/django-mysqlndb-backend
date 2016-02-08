@@ -1,6 +1,6 @@
 try:
     import MySQLdb as Database
-except ImportError, e:
+except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured("Error loading MySQLdb module: %s" % e)
 
@@ -8,27 +8,15 @@ import inspect
 from weakref import proxy
 import types
 
-import random
-
 from django.db.backends.mysql import base as mysqlbase
-
-BaseDatabaseWrapper = None
-try:
-    # Django 1.8
-    from django.db.backends.base.base import BaseDatabaseWrapper
-except ImportError:
-    pass
-
-if not BaseDatabaseWrapper or not issubclass(mysqlbase.DatabaseWrapper, BaseDatabaseWrapper):
-    from django.db.backends import BaseDatabaseWrapper
-
-
 from django.db.backends.mysql.client import DatabaseClient
 from django.db.backends.mysql.introspection import DatabaseIntrospection
 from django.db.backends.mysql.validation import DatabaseValidation
 from django.db.utils import DatabaseError
 
 from django.utils.safestring import SafeUnicode
+
+from transaction_hooks.mixin import TransactionHooksDatabaseWrapperMixin
 
 # Our one overridden class
 from .creation import DatabaseCreation
@@ -94,10 +82,10 @@ class DatabaseOperations(mysqlbase.DatabaseOperations):
             super_init()
 
 
-class DatabaseWrapper(mysqlbase.DatabaseWrapper):
+class DatabaseWrapper(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseWrapper):
 
     def __init__(self, *args, **kwargs):
-        BaseDatabaseWrapper.__init__(self, *args, **kwargs)
+        super(DatabaseWrapper, self).__init__(*args, **kwargs)
 
         self.server_version = None
         self.features = DatabaseFeatures(self)

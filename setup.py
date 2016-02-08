@@ -10,5 +10,6 @@ setup(
     install_requires=[
         "Django >= 1.2",
         "MySQL-python >= 1.2.2",
+        'django-transaction-hooks >= 0.2',
     ],
 )
