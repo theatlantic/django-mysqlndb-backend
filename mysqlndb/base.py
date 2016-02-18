@@ -4,13 +4,16 @@ except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured("Error loading MySQLdb module: %s" % e)
 
+import six
 from weakref import proxy
-import types
 
 from django.db.backends.mysql import base as mysqlbase
 from django.db.utils import DatabaseError
 
-from django.utils.safestring import SafeUnicode
+try:
+    from django.utils.safestring import SafeText
+except ImportError:
+    from django.utils.safestring import SafeUnicode as SafeText
 
 from transaction_hooks.mixin import TransactionHooksDatabaseWrapperMixin
 
@@ -110,12 +113,12 @@ class DatabaseWrapper(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseWr
                     unicode_literal_charset = unicode_literal.charset
                     if string_decoder.charset == 'latin1':
                         unicode_literal_charset = 'utf8'
-                    return db.literal(u.encode(unicode_literal_charset))
+                    return db.literal(six.text_type(u).encode(unicode_literal_charset))
                 return unicode_literal
 
             connection.unicode_literal = unicode_literal = _get_unicode_literal()
             connection.unicode_literal.charset = charset
-            connection.encoders[types.UnicodeType] = unicode_literal
-            connection.encoders[SafeUnicode] = unicode_literal
+            connection.encoders[six.text_type] = unicode_literal
+            connection.encoders[SafeText] = unicode_literal
 
         return cursor
