@@ -4,14 +4,10 @@ except ImportError as e:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured("Error loading MySQLdb module: %s" % e)
 
-import inspect
 from weakref import proxy
 import types
 
 from django.db.backends.mysql import base as mysqlbase
-from django.db.backends.mysql.client import DatabaseClient
-from django.db.backends.mysql.introspection import DatabaseIntrospection
-from django.db.backends.mysql.validation import DatabaseValidation
 from django.db.utils import DatabaseError
 
 from django.utils.safestring import SafeUnicode
@@ -62,26 +58,6 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
         self.supports_foreign_keys = self.storage_engine != 'ndbcluster'
 
 
-class DatabaseOperations(mysqlbase.DatabaseOperations):
-
-    def __init__(self, connection):
-        """
-        Compatibility wrapper for Django 1.4 and Django <= 1.3.
-
-        In Django 1.4, DatabaseOperations.__init__() takes connection as an
-        argument, whereas in Django <= 1.3 there are no extra arguments to
-        DatabaseOperations.__init__().
-        """
-        super_init = super(DatabaseOperations, self).__init__
-        ops_args = inspect.getargspec(super_init)[0]
-        if len(ops_args) == 2:
-            # Django 1.4
-            super_init(connection)
-        else:
-            # Django <= 1.3
-            super_init()
-
-
 class DatabaseWrapper(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseWrapper):
 
     def __init__(self, *args, **kwargs):
@@ -89,11 +65,11 @@ class DatabaseWrapper(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseWr
 
         self.server_version = None
         self.features = DatabaseFeatures(self)
-        self.ops = DatabaseOperations(self)
-        self.client = DatabaseClient(self)
+        self.ops = mysqlbase.DatabaseOperations(self)
+        self.client = mysqlbase.DatabaseClient(self)
         self.creation = DatabaseCreation(self)
-        self.introspection = DatabaseIntrospection(self)
-        self.validation = DatabaseValidation(self)
+        self.introspection = mysqlbase.DatabaseIntrospection(self)
+        self.validation = mysqlbase.DatabaseValidation(self)
 
     def _cursor(self):
         """
