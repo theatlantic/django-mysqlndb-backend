@@ -8,8 +8,7 @@ in the handling of foreign key
 constructs](http://bugs.mysql.com/bug.php?id=58929). The backend provided in
 this module extends and overrides the behavior of django's MySQL database
 backend to suppress foreign key constraints in `ALTER TABLE` and `CREATE TABLE`
-constructs. It also includes a South backend for django apps using
-[South](http://south.aeracode.org/) for migrations.
+constructs.
 
 Installation
 ------------
@@ -41,10 +40,5 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '',
     }
-}
-
-# If south is included in INSTALLED_APPS, this is required:
-SOUTH_DATABASE_ADAPTERS = {
-    'default': 'mysqlndb.south_backend',
 }
 ```

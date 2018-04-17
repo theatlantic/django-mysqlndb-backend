@@ -15,7 +15,6 @@ try:
 except ImportError:
     from django.utils.safestring import SafeUnicode as SafeText
 
-from transaction_hooks.mixin import TransactionHooksDatabaseWrapperMixin
 
 # Our one overridden class
 from .creation import DatabaseCreation
@@ -61,7 +60,7 @@ class DatabaseFeatures(mysqlbase.DatabaseFeatures):
         self.supports_foreign_keys = self.storage_engine != 'ndbcluster'
 
 
-class DatabaseWrapper(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseWrapper):
+class DatabaseWrapper(mysqlbase.DatabaseWrapper):
 
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
