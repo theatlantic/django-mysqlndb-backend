@@ -27,9 +27,5 @@ setup(
     packages=['mysqlndb'],
     url='https://github.com/theatlantic/django-mysqlndb-backend',
     description='Provides a django database backend that works with MySQL Cluster\'s NDB storage engine.',
-    install_requires=[
-        "Django >= 1.8",
-        mysql_req,
-        'six>=1.10.0',
-    ],
+    install_requires=install_requires,
 )
