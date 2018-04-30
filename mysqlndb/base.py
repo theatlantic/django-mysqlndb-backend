@@ -7,6 +7,7 @@ except ImportError as e:
 import six
 from weakref import proxy
 
+import django
 from django.db.backends.mysql import base as mysqlbase
 from django.db.utils import DatabaseError
 
@@ -14,6 +15,13 @@ try:
     from django.utils.safestring import SafeText
 except ImportError:
     from django.utils.safestring import SafeUnicode as SafeText
+
+if django.VERSION < (1, 9):
+    from transaction_hooks.mixin import TransactionHooksDatabaseWrapperMixin
+else:
+    # functionality for transactional hooks was added in Django 1.9
+    class TransactionHooksDatabaseWrapperMixin(object):
+        pass
 
 
 # Our one overridden class
@@ -25,7 +33,7 @@ from warnings import filterwarnings
 filterwarnings("always", category=Database.Warning)
 
 
-class DatabaseFeatures(mysqlbase.DatabaseFeatures):
+class DatabaseFeatures(TransactionHooksDatabaseWrapperMixin, mysqlbase.DatabaseFeatures):
     supports_foreign_keys = True
     _storage_engine = None
 
