@@ -22,7 +22,7 @@ if django.VERSION < (1, 9):
 
 setup(
     name='django-mysqlndb-backend',
-    version='1.2',
+    version='1.2.0',
     author_email='programmers@theatlantic.com',
     packages=['mysqlndb'],
     url='https://github.com/theatlantic/django-mysqlndb-backend',
