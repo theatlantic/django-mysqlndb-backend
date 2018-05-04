@@ -1,5 +1,4 @@
 import sys
-import django
 
 try:
     from setuptools import setup
@@ -8,6 +7,10 @@ except ImportError:
     use_setuptools()
     from setuptools import setup
 
+try:
+    from django import VERSION as django_version
+except ImportError:
+    django_version = None
 
 
 install_requires = [
@@ -16,13 +19,13 @@ install_requires = [
     'six>=1.10.0',
 ]
 
-if django.VERSION < (1, 9):
+if django_version and django_version < (1, 9):
     install_requires.append('django-transaction-hooks >= 0.2')
 
 
 setup(
     name='django-mysqlndb-backend',
-    version='1.2.0',
+    version='1.2.1',
     author_email='programmers@theatlantic.com',
     packages=['mysqlndb'],
     url='https://github.com/theatlantic/django-mysqlndb-backend',
